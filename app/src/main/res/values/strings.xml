@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Bound_service_demo</string>
+    <string name="get_timer">get current time stamp</string>
+    <string name="stop_service">stop service</string>
+</resources>
