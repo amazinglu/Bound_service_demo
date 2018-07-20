@@ -3,6 +3,7 @@ package com.example.amazinglu.bound_service_demo;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -12,6 +13,7 @@ import android.os.Message;
 import android.os.Process;
 import android.os.SystemClock;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.widget.Chronometer;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,6 +27,7 @@ public class BoundService extends Service {
 
     public static final String KEY_ACTION = "key_action";
     public static final String ACTION_GET_TIMER = "get_timer";
+    public static final String ACTION_STOP_CHRONOMATER = "stop_chronometer";
 
     public static final String KEY_TIME_STAMP = "key_time_stamp";
 
@@ -32,13 +35,14 @@ public class BoundService extends Service {
 
     private Looper looper;
     private ServiceHandler servicehandler;
+    private HandlerThread thread;
     private TimerTask timerTask;
 
     @Override
     public void onCreate() {
         super.onCreate();
         timerTask = new TimerTask(BoundService.this, this);
-        HandlerThread thread = new HandlerThread("bound_service_thread", Process.THREAD_PRIORITY_BACKGROUND);
+        thread = new HandlerThread("bound_service_thread", Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
         looper = thread.getLooper();
         servicehandler = new ServiceHandler(looper, BoundService.this, timerTask);
@@ -70,6 +74,18 @@ public class BoundService extends Service {
         intent.setAction(ACTION_NEW_TIMESTAMP);
         intent.putExtra(KEY_TIME_STAMP, curTimeStamp);
         sendBroadcast(intent);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public void stopWorkerThread() {
+        // stop the Chronometer in worker thread
+        Message stopChronometerMsg = servicehandler.obtainMessage();
+        Bundle args = new Bundle();
+        args.putString(KEY_ACTION, ACTION_STOP_CHRONOMATER);
+        stopChronometerMsg.setData(args);
+        servicehandler.sendMessage(stopChronometerMsg);
+        // quit the handler thread
+        thread.quitSafely();
     }
 
     public class MyBinder extends Binder {

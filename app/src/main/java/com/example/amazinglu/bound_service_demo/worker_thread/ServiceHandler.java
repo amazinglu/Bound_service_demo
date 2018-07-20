@@ -38,6 +38,8 @@ public class ServiceHandler extends Handler {
 
             timerTask.setCurTimeStamp(curTimeStamp);
             timerTask.handleState(STATE_NEW_TIMER);
+        } else if (action.equals(BoundService.ACTION_STOP_CHRONOMATER)) {
+            chronometer.stop();
         }
     }
 

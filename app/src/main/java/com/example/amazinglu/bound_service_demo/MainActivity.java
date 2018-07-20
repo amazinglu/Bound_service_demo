@@ -6,7 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.IBinder;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -20,7 +22,10 @@ public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.get_timer) Button getTimer;
     @BindView(R.id.stop_service) Button stopService;
+    @BindView(R.id.start_service) Button startService;
     @BindView(R.id.current_timer) TextView curTimer;
+
+    public static final String ACTION_STOP_SERVICE = "action_stop_service";
 
     private boolean isBound;
     private BoundService mService;
@@ -52,14 +57,41 @@ public class MainActivity extends AppCompatActivity {
         });
 
         stopService.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
             @Override
             public void onClick(View v) {
+                /**
+                 * terminate the worker thread first
+                 * */
+                mService.stopWorkerThread();
+                /**
+                 * unbind the service
+                 * */
                 if (isBound) {
                     unbindService(serviceConnection);
                     isBound = false;
                 }
+                /**
+                 * stop the service
+                 * */
+                Intent stopIntent = new Intent(MainActivity.this, BoundService.class);
+                stopService(stopIntent);
+
+                curTimer.setText(getResources().getString(R.string.begin_counter));
+            }
+        });
+
+        startService.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, BoundService.class);
-                stopService(intent);
+                /**
+                 * here we start service first and then bind
+                 * this service can be bind by different activities, but will not auto delete itself when
+                 * all the activities unbind, we need to stop it manually
+                 * */
+                startService(intent);
+                bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
             }
         });
     }
@@ -67,18 +99,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Intent intent = new Intent(MainActivity.this, BoundService.class);
-        startService(intent);
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-
         registerTimerReceiver();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        unbindService(serviceConnection);
-        isBound = false;
         unregisterReceiver(timerReceiver);
     }
 
@@ -89,9 +115,17 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(timerReceiver, timerReceiverIntentFilter);
     }
 
+    /**
+     * needed if we want to bind service
+     * can get the instance of the service here
+     * */
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            /**
+             * get the instance of the service
+             * so that we can use the public method of the service
+             * */
             BoundService.MyBinder binder = (BoundService.MyBinder) service;
             mService = binder.getService();
             isBound = true;
