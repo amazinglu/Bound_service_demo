@@ -1,0 +1,23 @@
+function of the demo:
+    get the Chronometer counter from back ground bound service
+
+implement:
+    1. use Bound service that can bind to different components
+        (the service will run infinitely in the background and can bind to different components)
+    2. the Chronometer is run in worker thread
+    3. pass the current time stamp from worker thread -> UI thread -> Bound service -> main activity
+        (details is in comments of TimerTask class)
+
+concerns:
+    communicate between activity and service
+        if bind and can return custom IBinder, activity can use the instance of service to access the
+        public methods in service class
+
+        use broadcast
+            if the receiver is the inner class of activity, only use implicit intent
+            because inner class cannot be registered in manifest
+
+    service life cycle
+        start, stop, bind, unbind service properly
+
+    way to communicate from worker thread to UI thread
