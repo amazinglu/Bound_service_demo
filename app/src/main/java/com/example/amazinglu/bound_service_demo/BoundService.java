@@ -42,6 +42,10 @@ public class BoundService extends Service {
     public void onCreate() {
         super.onCreate();
         timerTask = new TimerTask(BoundService.this, this);
+
+        /**
+         * start a new Handle thread for the Chronometer counter
+         * */
         thread = new HandlerThread("bound_service_thread", Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
         looper = thread.getLooper();
@@ -60,7 +64,9 @@ public class BoundService extends Service {
     }
 
     public void getTimestamp() {
-        // ask the worker thread to update the time stamp
+        /**
+         * ask the worker thread to return the cur time stamp
+         * */
         Message message = servicehandler.obtainMessage();
         Bundle args = new Bundle();
         args.putString(KEY_ACTION, ACTION_GET_TIMER);
@@ -68,6 +74,9 @@ public class BoundService extends Service {
         servicehandler.sendMessage(message);
     }
 
+    /**
+     * use broadcast the send the current time stamp back to main activity
+     * */
     public void showCurTimeStamp(String curTimeStamp) {
         Toast.makeText(BoundService.this, curTimeStamp, Toast.LENGTH_SHORT).show();
         Intent intent = new Intent();
